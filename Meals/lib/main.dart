@@ -98,7 +98,7 @@ class _MyAppState extends State<MyApp> {
       //   return MaterialPageRoute(builder: (context)=> CategoriesScreen());
       // },
 
-      // This is used when there is an error loading a page or the app crashes.. so We can fallback to this page.
+      // This is used when there is an error loading a page or the app crashes. so We can fallback to this page.
       onUnknownRoute: (settings) {
         return MaterialPageRoute(builder: (context) => CategoriesScreen());
       },
