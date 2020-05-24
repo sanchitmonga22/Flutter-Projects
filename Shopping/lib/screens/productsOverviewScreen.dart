@@ -1,5 +1,6 @@
 import 'package:Shopping/providers/cart.dart';
 import 'package:Shopping/providers/product.dart';
+import 'package:Shopping/providers/productsProvider.dart';
 import 'package:Shopping/widgets/appDrawer.dart';
 import 'package:Shopping/widgets/badge.dart';
 import 'package:Shopping/widgets/productGrid.dart';
@@ -18,6 +19,40 @@ class ProductsOverviewScreen extends StatefulWidget {
 class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
   final List<Product> loadedProducts = [];
   var showOnlyFavorites = false;
+  bool isInit = true;
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    // this is one of the ways by which you can fetch but there is another way
+    //Provider.of<ProductsProvider>(context, listen: false).fetchAndSetProducts();
+
+    // or you can use this code , there is one more way
+    // Future.delayed(Duration.zero).then((value) {
+    //   Provider.of<ProductsProvider>(context).fetchAndSetProducts();
+    // });
+
+    // Future.delayed would work for everyone
+
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    if (isInit) {
+      isLoading = true;
+      Provider.of<ProductsProvider>(context)
+          .fetchAndSetProducts()
+          .then((value) {
+        setState(() {
+          isLoading = false;
+        });
+      });
+    }
+    isInit = false;
+    super.didChangeDependencies();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,7 +93,11 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
         ],
       ),
       drawer: AppDrawer(),
-      body: ProductGrid(showFavs: showOnlyFavorites),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : ProductGrid(showFavs: showOnlyFavorites),
     );
   }
 }
