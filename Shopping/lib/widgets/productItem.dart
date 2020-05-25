@@ -1,3 +1,4 @@
+import 'package:Shopping/providers/auth.dart';
 import 'package:Shopping/providers/cart.dart';
 import 'package:Shopping/providers/product.dart';
 import 'package:Shopping/screens/productDetailScreen.dart';
@@ -9,6 +10,7 @@ class ProductItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final product = Provider.of<Product>(context, listen: false);
     final cart = Provider.of<Cart>(context, listen: false);
+    final auth = Provider.of<Auth>(context, listen: false);
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: GridTile(
@@ -38,7 +40,7 @@ class ProductItem extends StatelessWidget {
                 color: Theme.of(context).accentColor,
               ),
               onPressed: () {
-                product.toggleFavoriteStatus();
+                product.toggleFavoriteStatus(auth.token, auth.userId);
               },
             );
           }), // on the start of the footer

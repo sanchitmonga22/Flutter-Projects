@@ -41,6 +41,10 @@ class ProductsProvider with ChangeNotifier {
   ];
 
   // var showFavoriteOnly = false;
+  final String authToken;
+  final String userId;
+
+  ProductsProvider(this.authToken, this.products, this.userId);
 
   List<Product> get items {
     // if (showFavoriteOnly) {
@@ -59,7 +63,7 @@ class ProductsProvider with ChangeNotifier {
 
   Future<void> deleteProduct(String id) async {
     final url =
-        'https://flutterpractise-a76f3.firebaseio.com/products/$id.json';
+        'https://flutterpractise-a76f3.firebaseio.com/products/$id.json?auth=$authToken';
     final existingProductIndex = products.indexWhere((prod) => prod.id == id);
     var existingProduct = products[existingProductIndex];
     final response = await http.delete(url);
@@ -87,7 +91,7 @@ class ProductsProvider with ChangeNotifier {
     final prodIndex = products.indexWhere((element) => element.id == id);
     if (prodIndex >= 0) {
       final url =
-          'https://flutterpractise-a76f3.firebaseio.com/products/$id.json';
+          'https://flutterpractise-a76f3.firebaseio.com/products/$id.json?auth=$authToken';
       await http.patch(url,
           body: json.encode({
             'title': newProduct.title,
@@ -102,8 +106,11 @@ class ProductsProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchAndSetProducts() async {
-    const url = 'https://flutterpractise-a76f3.firebaseio.com/products.json';
+  Future<void> fetchAndSetProducts([bool filterByUser = false]) async {
+    final filterString =
+        filterByUser ? '"orderBy="creatorId"&equalTo"$userId""' : "";
+    final url =
+        'https://flutterpractise-a76f3.firebaseio.com/products.json?auth=$authToken&$filterString';
     try {
       final response = await http.get(url);
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
@@ -111,17 +118,23 @@ class ProductsProvider with ChangeNotifier {
       if (extractedData == null) {
         return;
       }
+      final favoriteUrl =
+          'https://flutterpractise-a76f3.firebaseio.com/userFavorites/$userId.json?auth=$authToken';
+
+      final favoriteResponse = await http.get(favoriteUrl);
+      final favoriteData = json.decode(favoriteResponse.body);
       extractedData.forEach((prodID, prodData) {
         loadedProducts.add(Product(
             id: prodID,
             title: prodData['title'],
             description: prodData['description'],
+            isFavorite:
+                favoriteData == null ? false : favoriteData[prodID] ?? false,
             price: prodData['price'],
-            isFavorite: prodData['isFavorite'],
             imageUrl: prodData['imageUrl']));
       });
       products = loadedProducts;
-      print(response);
+
       notifyListeners();
     } catch (error) {
       throw error;
@@ -129,7 +142,8 @@ class ProductsProvider with ChangeNotifier {
   }
 
   Future<void> addProduct(Product product) async {
-    const url = 'https://flutterpractise-a76f3.firebaseio.com/products.json';
+    final url =
+        'https://flutterpractise-a76f3.firebaseio.com/products.json?auth=$authToken';
     try {
       final response = await http.post(url,
           body: json.encode({
@@ -137,7 +151,7 @@ class ProductsProvider with ChangeNotifier {
             'description': product.description,
             'imageUrl': product.imageUrl,
             'price': product.price,
-            'isFavorite': product.isFavorite
+            'creatorId': userId
           }));
       final newProduct = Product(
           title: product.title,
